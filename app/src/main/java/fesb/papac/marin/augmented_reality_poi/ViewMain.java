@@ -418,7 +418,7 @@ public class ViewMain extends View implements SensorEventListener,
                  * Ako je njihova vrijednost veca od horizontalnog kuta gledanja kamere to znaci da se tocka mora nacrtati van ekrana.
                  *
                  * Za y vrijednost koristim Math.toDegrees(orientation[1]) / 3. Tu vrijednost dijelim s 3 jer zelim smanjiti utjecaj mobitela
-                 * u pomaku gore-dole. gzftzuftututh
+                 * u pomaku gore-dole.
                  */
                 float dx = (float) ((canvas.getWidth() / horizontalFOV) * (Math.toDegrees(orientation[0]) - listOfBearingTo.get(counter[i])));
                 float dy = (float) ((canvas.getHeight() / verticalFOV ) * Math.toDegrees(orientation[1]) /3);
