@@ -213,9 +213,9 @@ public class ViewMain extends View implements SensorEventListener,
          * the location has changed by at least minDistance meters, AND at least minTime milliseconds have passed.
          */
 
-        // locationManager.requestLocationUpdates(best, 50, 0, this);
+        locationManager.requestLocationUpdates(best, 50, 0, this);
 
-        /**
+
         if (locationManager !=null )
         {
             lastLocation = locationManager.getLastKnownLocation(LocationManager.NETWORK_PROVIDER);
@@ -229,8 +229,9 @@ public class ViewMain extends View implements SensorEventListener,
             endLat = lastLocation.getLatitude();
             endLong = lastLocation.getLongitude();
         }
-         **/
 
+
+        /**
         Location gps_loc = null, net_loc = null;
 
         if (gps_enabled){
@@ -255,12 +256,14 @@ public class ViewMain extends View implements SensorEventListener,
                 lastLocation = gps_loc;
                 locationManager.requestLocationUpdates(LocationManager.GPS_PROVIDER, 50, 0, this);
             }
+
             else if (net_loc != null){
                 lastLocation = net_loc;
                 locationManager.requestLocationUpdates(LocationManager.NETWORK_PROVIDER, 50, 0, this);
             }
-        }
 
+        }
+        **/
     }
 
 
@@ -601,11 +604,9 @@ public class ViewMain extends View implements SensorEventListener,
     }
 
     public void onProviderEnabled(String provider) {
-        // ...
     }
 
     public void onStatusChanged(String provider, int status, Bundle extras) {
-        // ...
     }
 
     // this is not an override
