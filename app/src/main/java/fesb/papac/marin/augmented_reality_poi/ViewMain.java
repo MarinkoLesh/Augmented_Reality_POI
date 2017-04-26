@@ -1,6 +1,9 @@
 package fesb.papac.marin.augmented_reality_poi;
 
+import android.app.AlertDialog;
 import android.content.Context;
+import android.content.DialogInterface;
+import android.content.Intent;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.graphics.Canvas;
@@ -16,9 +19,11 @@ import android.location.LocationListener;
 import android.location.LocationManager;
 import android.os.Bundle;
 import android.os.Handler;
+import android.provider.Settings;
 import android.text.TextPaint;
 import android.util.Log;
 import android.view.View;
+import android.widget.Toast;
 
 import com.google.gson.Gson;
 
@@ -54,12 +59,15 @@ public class ViewMain extends View implements SensorEventListener,
     private LocationManager locationManager = null;
     private SensorManager sensors = null;
 
+
     /**
      * These variables are used to get current location and to get current sensor readings
      */
     private Location lastLocation;
     private float[] lastAccelerometer,lastGyroscope, lastCompass, lastRotationVector, lastGameRotationVector, lastGravity, lastLinearAcc;
     double endLat, endLong, endAlti;
+    boolean gps_enabled = false;
+    boolean network_enabled = false;
 
     float textHeight, textOffset;
     int textlength, POIHight;
@@ -96,10 +104,10 @@ public class ViewMain extends View implements SensorEventListener,
         this.context = context;
         this.handler = new Handler();
 
-        locationManager = (LocationManager) context
-                .getSystemService(Context.LOCATION_SERVICE);
+        locationManager = (LocationManager) context .getSystemService(Context.LOCATION_SERVICE);
 
         sensors = (SensorManager) context.getSystemService(Context.SENSOR_SERVICE);
+
         accelSensor = sensors.getDefaultSensor(Sensor.TYPE_ACCELEROMETER);
         compassSensor = sensors.getDefaultSensor(Sensor.TYPE_MAGNETIC_FIELD);
         gyroSensor = sensors.getDefaultSensor(Sensor.TYPE_GYROSCOPE);
@@ -183,6 +191,8 @@ public class ViewMain extends View implements SensorEventListener,
         /**
          * Here i can set the accuracy of the gps, and the power requirement
          */
+        gps_enabled = locationManager.isProviderEnabled(LocationManager.GPS_PROVIDER);
+        network_enabled = locationManager.isProviderEnabled(LocationManager.NETWORK_PROVIDER);
 
         Criteria criteria = new Criteria();
         // criteria.setAccuracy(Criteria.ACCURACY_FINE);
@@ -203,7 +213,53 @@ public class ViewMain extends View implements SensorEventListener,
          * the location has changed by at least minDistance meters, AND at least minTime milliseconds have passed.
          */
 
-        locationManager.requestLocationUpdates(best, 50, 0, this);
+        // locationManager.requestLocationUpdates(best, 50, 0, this);
+
+        /**
+        if (locationManager !=null )
+        {
+            lastLocation = locationManager.getLastKnownLocation(LocationManager.NETWORK_PROVIDER);
+            if (lastLocation == null){
+                lastLocation = locationManager.getLastKnownLocation(LocationManager.GPS_PROVIDER);
+            }
+
+        }
+        if (lastLocation !=null )
+        {
+            endLat = lastLocation.getLatitude();
+            endLong = lastLocation.getLongitude();
+        }
+         **/
+
+        Location gps_loc = null, net_loc = null;
+
+        if (gps_enabled){
+            gps_loc = locationManager.getLastKnownLocation(LocationManager.GPS_PROVIDER);
+        }
+        if (network_enabled){
+            net_loc = locationManager.getLastKnownLocation(LocationManager.NETWORK_PROVIDER);
+        }
+
+        if (gps_loc != null && net_loc != null){
+            if (gps_loc.getAccuracy() > net_loc.getAccuracy()){
+                lastLocation = net_loc;
+                locationManager.requestLocationUpdates(LocationManager.NETWORK_PROVIDER, 50, 0, this);
+            }
+            else {
+                lastLocation = gps_loc;
+                locationManager.requestLocationUpdates(LocationManager.GPS_PROVIDER, 50, 0, this);
+            }
+        }
+        else{
+            if (gps_loc != null){
+                lastLocation = gps_loc;
+                locationManager.requestLocationUpdates(LocationManager.GPS_PROVIDER, 50, 0, this);
+            }
+            else if (net_loc != null){
+                lastLocation = net_loc;
+                locationManager.requestLocationUpdates(LocationManager.NETWORK_PROVIDER, 50, 0, this);
+            }
+        }
 
     }
 
@@ -416,7 +472,7 @@ public class ViewMain extends View implements SensorEventListener,
                  */
                 textHeight = textPaint.descent() - textPaint.ascent();
                 textOffset = (textHeight / 2) - textPaint.descent();
-                textlength = pointOfInterests[i].getPlaces().length();
+                textlength = pointOfInterests[counter[i]].getPlaces().length();
 
                 canvas.save();
 
@@ -424,7 +480,7 @@ public class ViewMain extends View implements SensorEventListener,
                  * This is to get the name of the location that the point shows, and to get distance to that point
                  */
 
-                String mytext = pointOfInterests[i].getPlaces();
+                String mytext = pointOfInterests[counter[i]].getPlaces();
                 String mytext2 = String.valueOf(distance[i]);
 
                 /**
@@ -524,6 +580,7 @@ public class ViewMain extends View implements SensorEventListener,
 
         this.invalidate();
 
+
     }
 
     public void onLocationChanged(Location location) {
@@ -531,10 +588,12 @@ public class ViewMain extends View implements SensorEventListener,
          * If the location of my phone is changed i need to get the new location
          */
         // store it off for use when we need it
+
         lastLocation = location;
         endLat = location.getLatitude();
         endLong = location.getLongitude();
         endAlti = location.getAltitude();
+
     }
 
     public void onProviderDisabled(String provider) {
