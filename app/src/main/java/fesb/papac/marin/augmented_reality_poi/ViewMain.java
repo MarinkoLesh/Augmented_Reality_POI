@@ -183,11 +183,12 @@ public class ViewMain extends View implements SensorEventListener,
         /**
          * Here i can set the accuracy of the gps, and the power requirement
          */
+
         Criteria criteria = new Criteria();
         // criteria.setAccuracy(Criteria.ACCURACY_FINE);
         // while we want fine accuracy, it's unlikely to work indoors where we
         // do our testing. :)
-        criteria.setAccuracy(Criteria.ACCURACY_FINE);
+        criteria.setAccuracy(Criteria.NO_REQUIREMENT);
         criteria.setPowerRequirement(Criteria.NO_REQUIREMENT);
 
         String best = locationManager.getBestProvider(criteria, true);
@@ -201,8 +202,11 @@ public class ViewMain extends View implements SensorEventListener,
          * If it is greater than 0 then the location provider will only send your application an update when
          * the location has changed by at least minDistance meters, AND at least minTime milliseconds have passed.
          */
+
         locationManager.requestLocationUpdates(best, 50, 0, this);
+
     }
+
 
     @Override
     protected void onDraw(Canvas canvas) {
