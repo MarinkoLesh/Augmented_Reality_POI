@@ -1,0 +1,30 @@
+[{	"latitude" : 43.511011,
+	"longitude" : 16.468052,
+	"altitude" : 70,
+	"place" : "Sveucilisna Knjiznica Split"
+},{
+	"latitude" : 43.511936,
+	"longitude" : 16.468485,
+	"altitude" : 70,
+	"place" : " PFST "
+},{
+	"latitude" : 43.512195,
+	"longitude" : 16.467201,
+	"altitude" : 70,
+	"place" : " Ekonomski fakultet Split "
+},
+{
+	"latitude" : 43.511883,
+	"longitude" : 16.465973,
+	"altitude" : 70,
+	"place" : " Student Servis Split "
+},
+{
+    "latitude" : 43.511883,
+	"longitude" : 16.465973,
+	"altitude" : 70,
+	"place" : " Student Servis Split "
+}
+
+
+]
