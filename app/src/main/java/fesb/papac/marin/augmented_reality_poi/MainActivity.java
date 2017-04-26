@@ -4,6 +4,11 @@ import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
 import android.widget.FrameLayout;
 
+import com.google.gson.Gson;
+
+import java.io.IOException;
+import java.io.InputStream;
+
 public class MainActivity extends AppCompatActivity {
 
     private ViewMain Content;
@@ -20,6 +25,8 @@ public class MainActivity extends AppCompatActivity {
 
         Content = new ViewMain(getApplicationContext());
         ViewPane.addView(Content);
+
+
     }
     @Override
     protected void onPause() {

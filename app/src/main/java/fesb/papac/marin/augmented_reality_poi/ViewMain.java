@@ -20,6 +20,10 @@ import android.text.TextPaint;
 import android.util.Log;
 import android.view.View;
 
+import com.google.gson.Gson;
+
+import java.io.IOException;
+import java.io.InputStream;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -29,6 +33,8 @@ import java.util.List;
 
 public class ViewMain extends View implements SensorEventListener,
         LocationListener {
+
+    public static PointOfInterest[] pointOfInterests;
 
     public static final String DEBUG_TAG = "OverlayView Log";
 
@@ -43,17 +49,6 @@ public class ViewMain extends View implements SensorEventListener,
      * Forth value is the NAME OF PLACE
      *
      */
-
-    private static ArrayList<InterestPoint> ListOfInterestPoints()
-    {
-        ArrayList<InterestPoint> interestPoints = new ArrayList<>();
-        interestPoints.add(new InterestPoint(43.511011, 16.468052, 70, "Sveucilisna Knjiznica Split"));
-        interestPoints.add(new InterestPoint(43.511936, 16.468485, 80, " PFST "));
-        interestPoints.add(new InterestPoint(43.512195, 16.467201, 100, "Ekonomski fakultet Split"));
-        interestPoints.add(new InterestPoint(43.511883, 16.465973, 110, "Student Servis Split"));
-
-        return interestPoints;
-    }
 
 
     private LocationManager locationManager = null;
@@ -83,9 +78,6 @@ public class ViewMain extends View implements SensorEventListener,
 
     PaintUtils paintUtilities = new PaintUtils(this);
 
-    float[] dist = new float[1];
-    int [] distance = new int [ ListOfInterestPoints().size()];
-    int [] counter = new int[ ListOfInterestPoints().size()];
 
     float rotation[] = new float[9];
     float identity[] = new float[9];
@@ -146,7 +138,24 @@ public class ViewMain extends View implements SensorEventListener,
         roundRec = paintUtilities.getRoundRec();
         borderRec = paintUtilities.getBorderRec();
 
+        String json= null;
+        try {
+            InputStream inputStream = context.getAssets().open("poi_json.txt");
+            int size = inputStream.available();
+            byte [] buffer = new byte [size];
+            inputStream.read(buffer);
+            inputStream.close();
+            json = new String(buffer, "UTF-8");
+
+        }
+        catch (IOException ex){
+            ex.printStackTrace();
+        }
+
+        pointOfInterests = new Gson().fromJson(json, PointOfInterest[].class );
+
     }
+
 
     private void startSensors() {
         /**
@@ -199,6 +208,12 @@ public class ViewMain extends View implements SensorEventListener,
     protected void onDraw(Canvas canvas) {
         super.onDraw(canvas);
 
+        float[] dist = new float[1];
+        int [] distance = new int [ pointOfInterests.length];
+        int [] counter = new int[ pointOfInterests.length];
+
+
+
         /**
          * This loop is used to calculate the distance between the phone and every POI( point of interest)
          * void distanceBetween (double startLatitude, double startLongitude, double endLatitude, double endLongitude, float[] results)
@@ -208,10 +223,10 @@ public class ViewMain extends View implements SensorEventListener,
          * Variable counter is used further in code, and will be better explained there
          *
          */
-        for ( int i=0; i < ListOfInterestPoints().size(); i++)
+        for ( int i=0; i < pointOfInterests.length; i++)
         {
-            Location.distanceBetween( ListOfInterestPoints().get(i).getLatitude(),
-                    ListOfInterestPoints().get(i).getLongitude(), endLat, endLong, dist );
+            Location.distanceBetween( pointOfInterests[i].getLatitude(),
+                    pointOfInterests[i].getLongitude(), endLat, endLong, dist );
             counter[i] = i;
             distance[i] = (int) dist[0];
 
@@ -243,9 +258,9 @@ public class ViewMain extends View implements SensorEventListener,
              * the right value of distance
              *
              */
-            for (int z=0; z < ListOfInterestPoints().size(); z++)
+            for (int z=0; z < pointOfInterests.length; z++)
             {
-                for (int j=z+1; j<ListOfInterestPoints().size(); j++)
+                for (int j=z+1; j<pointOfInterests.length; j++)
                 {
                     int a = distance[z];
                     int b = distance[j];
@@ -279,13 +294,21 @@ public class ViewMain extends View implements SensorEventListener,
              * an object relative bearing 180 degrees would be behind.
              * [1] Bearings can be measured in mils or degrees.
              */
-            for (InterestPoint svaki: ListOfInterestPoints()) {
+        /**
+
+        **/
+            for (int i=0; i < pointOfInterests.length; i++)
+            {
                 Location temp = new Location("manual");
-                temp.setLatitude(svaki.getLatitude());
-                temp.setLongitude(svaki.getLongitude());
-                temp.setAltitude(svaki.getAltitude());
+                temp.setLatitude(pointOfInterests[i].getLatitude());
+                temp.setLongitude(pointOfInterests[i].getLongitude());
+                temp.setAltitude(pointOfInterests[i].getAltitude());
+
                 listOfBearingTo.add(lastLocation.bearingTo(temp));
+
             }
+
+
 
             /**
              * boolean getRotationMatrix (float[] R, float[] I, float[] gravity, float[] geomagnetic)
@@ -366,7 +389,7 @@ public class ViewMain extends View implements SensorEventListener,
             orientation = lowPass(orientationAplha, orientation);
 
 
-            for ( int i=0; i < ListOfInterestPoints().size(); i++)
+            for ( int i=0; i < pointOfInterests.length; i++)
             {
                 /**
                  * Here i check the distance between the phone and POI. For every distance i have a value that
@@ -389,14 +412,15 @@ public class ViewMain extends View implements SensorEventListener,
                  */
                 textHeight = textPaint.descent() - textPaint.ascent();
                 textOffset = (textHeight / 2) - textPaint.descent();
-                textlength = ListOfInterestPoints().get(counter[i]).getPlace().length();
+                textlength = pointOfInterests[i].getPlaces().length();
 
                 canvas.save();
 
                 /**
                  * This is to get the name of the location that the point shows, and to get distance to that point
                  */
-                String mytext = ListOfInterestPoints().get(counter[i]).getPlace();
+
+                String mytext = pointOfInterests[i].getPlaces();
                 String mytext2 = String.valueOf(distance[i]);
 
                 /**
