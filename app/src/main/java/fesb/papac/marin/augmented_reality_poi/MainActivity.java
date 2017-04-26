@@ -24,12 +24,11 @@ public class MainActivity extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
 
-/**
         final LocationManager locationManager = (LocationManager) getSystemService(Context.LOCATION_SERVICE);
         if (!locationManager.isProviderEnabled(LocationManager.GPS_PROVIDER)){
             showSettingAlert();
         }
-**/
+
         FrameLayout ViewPane = (FrameLayout) findViewById(R.id.ar_view_pane);
 
         DisplayView displayView = new DisplayView(getApplicationContext(), this);
