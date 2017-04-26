@@ -18,13 +18,5 @@
 	"longitude" : 16.465973,
 	"altitude" : 70,
 	"place" : " Student Servis Split "
-},
-{
-    "latitude" : 43.511883,
-	"longitude" : 16.465973,
-	"altitude" : 70,
-	"place" : " Student Servis Split "
 }
-
-
 ]
