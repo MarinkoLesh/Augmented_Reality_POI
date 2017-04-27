@@ -3,4 +3,5 @@
     android:layout_width="fill_parent"
     android:id="@+id/ar_view_pane"
     xmlns:android="http://schemas.android.com/apk/res/android">
+
 </FrameLayout>

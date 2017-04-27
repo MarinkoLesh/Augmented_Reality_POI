@@ -22,7 +22,9 @@ import android.os.Handler;
 import android.provider.Settings;
 import android.text.TextPaint;
 import android.util.Log;
+import android.view.MotionEvent;
 import android.view.View;
+import android.widget.TextView;
 import android.widget.Toast;
 
 import com.google.gson.Gson;
@@ -38,6 +40,8 @@ import java.util.List;
 
 public class ViewMain extends View implements SensorEventListener,
         LocationListener {
+
+    double canvasWidth,canvasHeight;
 
     public static PointOfInterest[] pointOfInterests;
 
@@ -213,7 +217,7 @@ public class ViewMain extends View implements SensorEventListener,
          * the location has changed by at least minDistance meters, AND at least minTime milliseconds have passed.
          */
 
-        locationManager.requestLocationUpdates(best, 50, 0, this);
+         locationManager.requestLocationUpdates(best, 50, 0, this);
 
 
         if (locationManager !=null )
@@ -230,7 +234,11 @@ public class ViewMain extends View implements SensorEventListener,
             endLong = lastLocation.getLongitude();
         }
 
-
+        /**
+         *  The main problem the code in "green" is that if you have on gps and network, network will always get your location first
+         *  but i can't make the phone use gps after some time, to get better accuracy. I can do that only if i have a button
+         *  which will change from network to gps
+         */
         /**
         Location gps_loc = null, net_loc = null;
 
@@ -257,13 +265,9 @@ public class ViewMain extends View implements SensorEventListener,
                 locationManager.requestLocationUpdates(LocationManager.GPS_PROVIDER, 50, 0, this);
             }
 
-            else if (net_loc != null){
-                lastLocation = net_loc;
-                locationManager.requestLocationUpdates(LocationManager.NETWORK_PROVIDER, 50, 0, this);
-            }
-
         }
         **/
+
     }
 
 
@@ -271,11 +275,14 @@ public class ViewMain extends View implements SensorEventListener,
     protected void onDraw(Canvas canvas) {
         super.onDraw(canvas);
 
+
         float[] dist = new float[1];
         int [] distance = new int [ pointOfInterests.length];
         int [] counter = new int[ pointOfInterests.length];
 
 
+        canvasHeight = canvas.getHeight();
+        canvasWidth = canvas.getWidth();
 
         /**
          * This loop is used to calculate the distance between the phone and every POI( point of interest)
@@ -544,9 +551,62 @@ public class ViewMain extends View implements SensorEventListener,
                  */
                 canvas.restore();
 
+
             }
         }
     }
+
+
+    public boolean onTouchEvent (MotionEvent event){
+        int action = event.getAction();
+        float x = event.getX();
+        float y = event.getY();
+
+        switch (action){
+            case MotionEvent.ACTION_DOWN:
+                for (int i=0; i< pointOfInterests.length; i++){
+
+                    float dx = (float) ((canvasWidth / horizontalFOV) * (Math.toDegrees(orientation[0]) - listOfBearingTo.get(i)));
+                    float dy = (float) ((canvasHeight / verticalFOV ) * Math.toDegrees(orientation[1]) /3);
+
+                    float[] dist = new float[1];
+                    int  distance ;
+
+                    Location.distanceBetween( pointOfInterests[i].getLatitude(),
+                            pointOfInterests[i].getLongitude(), endLat, endLong, dist );
+                    distance = (int) dist[0];
+
+                    if (distance<50)
+                    {POIHight = 0;}
+                    else if (distance<100)
+                    {POIHight = 40;}
+                    else if (distance<150)
+                    {POIHight = 80;}
+                    else if (distance<200)
+                    {POIHight = 120;}
+                    else if (distance>200)
+                    {POIHight = 160;}
+
+                    textHeight = textPaint.descent() - textPaint.ascent();
+                    textOffset = (textHeight / 2) - textPaint.descent();
+                    textlength = pointOfInterests[i].getPlaces().length();
+
+                 // canvas.drawBitmap ( bmp, (canvas.getWidth()/2) - 36 * 5, (canvas.getHeight()/2)- 95 * 4 - POIHight, null);
+
+                    if (x >=( ((canvasWidth/2) -dx) - 36*5) && x < ((canvasWidth/2)-dx -(36*5)+ 200)   && y >=((canvasHeight/2)-dy - (95*4) - POIHight-50 ) && y <((canvasHeight/2)-dy - (95*4) - POIHight +400)) {
+
+                      Toast.makeText(context, pointOfInterests[i].getPlaces(), Toast.LENGTH_SHORT).show();
+
+                    }
+
+                }
+                break;
+
+        }
+
+        return false;
+    }
+
 
     public void onAccuracyChanged(Sensor arg0, int arg1) {
         Log.d(DEBUG_TAG, "onAccuracyChanged");
@@ -591,7 +651,6 @@ public class ViewMain extends View implements SensorEventListener,
          * If the location of my phone is changed i need to get the new location
          */
         // store it off for use when we need it
-
         lastLocation = location;
         endLat = location.getLatitude();
         endLong = location.getLongitude();
