@@ -1,5 +1,6 @@
 package fesb.papac.marin.augmented_reality_poi;
 
+import android.app.Activity;
 import android.app.AlertDialog;
 import android.content.Context;
 import android.content.DialogInterface;
@@ -22,8 +23,13 @@ import android.os.Handler;
 import android.provider.Settings;
 import android.text.TextPaint;
 import android.util.Log;
+import android.view.Gravity;
+import android.view.LayoutInflater;
 import android.view.MotionEvent;
 import android.view.View;
+import android.view.ViewGroup;
+import android.widget.Button;
+import android.widget.PopupWindow;
 import android.widget.TextView;
 import android.widget.Toast;
 
@@ -59,10 +65,8 @@ public class ViewMain extends View implements SensorEventListener,
      *
      */
 
-
     private LocationManager locationManager = null;
     private SensorManager sensors = null;
-
 
     /**
      * These variables are used to get current location and to get current sensor readings
@@ -82,14 +86,12 @@ public class ViewMain extends View implements SensorEventListener,
 
     private Sensor accelSensor, compassSensor, gyroSensor, RotateVectorSensor, GameRotationVector, Gravity, LinearAcc;
 
-
     private TextPaint contentPaint, textPaint;
     private Paint targetPaint, roundRec, borderRec;
 
     private int axisX,axisY, screenRot;
 
     PaintUtils paintUtilities = new PaintUtils(this);
-
 
     float rotation[] = new float[9];
     float identity[] = new float[9];
@@ -102,6 +104,8 @@ public class ViewMain extends View implements SensorEventListener,
     float orientationAplha [] = new float[3];
 
     Bitmap bmp = BitmapFactory.decodeResource(getResources(), R.drawable.poismaller);
+
+    PopupWindow popupWindow;
 
     public ViewMain(Context context) {
         super(context);
@@ -128,6 +132,7 @@ public class ViewMain extends View implements SensorEventListener,
         screenRot = screenRotation.getScreenRotation();
         axisX = screenRotation.getAxisX();
         axisY = screenRotation.getAxisY();
+
 
         startSensors();
         startGPS();
@@ -269,7 +274,6 @@ public class ViewMain extends View implements SensorEventListener,
         **/
 
     }
-
 
     @Override
     protected void onDraw(Canvas canvas) {
@@ -459,6 +463,7 @@ public class ViewMain extends View implements SensorEventListener,
             orientation = lowPass(orientationAplha, orientation);
 
 
+
             for ( int i=0; i < pointOfInterests.length; i++)
             {
                 /**
@@ -497,7 +502,8 @@ public class ViewMain extends View implements SensorEventListener,
                  *  canvas.rotate() is used because if I apply roll to the phone i want my picture to always stay parallel
                  *  to the ground no mather the phone angle about y/z axis
                  */
-                canvas.rotate((float) (0.0f - Math.toDegrees(orientation[2])));
+
+                   // canvas.rotate((float) (0.0f - (Math.toDegrees(orientation[2]) /2)));
 
                 /**
                  * Translate, but normalize for the FOV( field of view) of the camera -- basically, pixels per degree, times degrees == pixels
@@ -529,6 +535,7 @@ public class ViewMain extends View implements SensorEventListener,
                 // now translate the dx
                 canvas.translate(0.0f - dx, 0.0f);
 
+
                 // draw rectangle  ( left , top, right, bottom)
                 canvas.drawRect((canvas.getWidth() / 2) - ( textOffset * 20 ), (canvas.getHeight()/2 ) - 50 - POIHight, (canvas.getWidth() / 2) + ( textOffset * 20 ), (canvas.getHeight()/2 ) + 80 - POIHight, roundRec);
 
@@ -549,13 +556,54 @@ public class ViewMain extends View implements SensorEventListener,
                  * need to calculate how far i need to draw one point from another, i can just start from scratch
                  *
                  */
+
                 canvas.restore();
+
+                /**
+                canvas.save();
+                canvas.translate(0.0f,0.0f);
+                canvas.rotate((float) (0.0f - (Math.toDegrees(orientation[2]))));
+
+                canvas.restore();
+                 **/
 
 
             }
         }
     }
 
+    public void showWindow(View parent, int i){
+
+        LayoutInflater layoutInflater = (LayoutInflater) context.getSystemService(Context.LAYOUT_INFLATER_SERVICE);
+        View popupView = layoutInflater.inflate(R.layout.pop_up_show, null);
+        popupWindow = new PopupWindow(popupView, ViewGroup.LayoutParams.WRAP_CONTENT,
+                ViewGroup.LayoutParams.WRAP_CONTENT);
+
+        TextView opisTxt = (TextView) popupView.findViewById(R.id.opis_txt);
+        TextView dataTxt = (TextView) popupView.findViewById(R.id.data_txt);
+
+        popupWindow.showAtLocation(parent, android.view.Gravity.CENTER, android.view.Gravity.CENTER, android.view.Gravity.CENTER);
+        popupWindow.setAnimationStyle(android.R.style.Animation_Toast);
+        // popupWindow.getBackground();
+        popupWindow.setFocusable(true);
+        popupWindow.update();
+
+
+        opisTxt.setText("Detalji: ");
+        opisTxt.setTextSize(6 * context.getResources().getDisplayMetrics().density);
+        opisTxt.setTextAlignment(TEXT_ALIGNMENT_CENTER);
+
+        dataTxt.setText(pointOfInterests[i].getData());
+        dataTxt.setTextSize(4 * context.getResources().getDisplayMetrics().density);
+
+        dataTxt.setOnClickListener(new OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                popupWindow.dismiss();
+            }
+        });
+
+    }
 
     public boolean onTouchEvent (MotionEvent event){
         int action = event.getAction();
@@ -595,7 +643,8 @@ public class ViewMain extends View implements SensorEventListener,
 
                     if (x >=( ((canvasWidth/2) -dx) - 36*5) && x < ((canvasWidth/2)-dx -(36*5)+ 200)   && y >=((canvasHeight/2)-dy - (95*4) - POIHight-50 ) && y <((canvasHeight/2)-dy - (95*4) - POIHight +400)) {
 
-                      Toast.makeText(context, pointOfInterests[i].getPlaces(), Toast.LENGTH_SHORT).show();
+                        //  Toast.makeText(context, pointOfInterests[i].getPlaces(), Toast.LENGTH_SHORT).show();
+                        showWindow(this,i);
 
                     }
 
@@ -683,7 +732,7 @@ public class ViewMain extends View implements SensorEventListener,
 
 
     // static final float ALPHA = 0.05f; // if ALPHA = 1 OR 0, no filter applies.
-    static final float ALPHA = 0.05f;
+    static final float ALPHA = 0.3f;
 
     protected float[] lowPass(float[] input, float[] output) {
         if (output == null) return input;

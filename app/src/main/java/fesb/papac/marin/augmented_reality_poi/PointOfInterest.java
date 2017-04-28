@@ -10,6 +10,7 @@ public class PointOfInterest {
     public double longitude;
     public double altitude;
     public String place;
+    public String data;
 
     public double getLatitude() {
         return latitude;
@@ -26,4 +27,6 @@ public class PointOfInterest {
     public String getPlaces() {
         return place;
     }
+
+    public String getData() { return data;}
 }
