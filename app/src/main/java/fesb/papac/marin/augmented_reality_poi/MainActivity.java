@@ -1,13 +1,18 @@
 package fesb.papac.marin.augmented_reality_poi;
 
+import android.app.Activity;
 import android.app.AlertDialog;
 import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
+import android.hardware.SensorManager;
 import android.location.LocationManager;
 import android.provider.Settings;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
+import android.view.Surface;
+import android.view.ViewGroup;
+import android.view.WindowManager;
 import android.widget.FrameLayout;
 
 import com.google.gson.Gson;
@@ -29,13 +34,34 @@ public class MainActivity extends AppCompatActivity {
             showSettingAlert();
         }
 
-        FrameLayout ViewPane = (FrameLayout) findViewById(R.id.ar_view_pane);
+        FrameLayout ViewPane2 = (FrameLayout) findViewById(R.id.ar_view_pane_2);
+        FrameLayout ViewPane3 = (FrameLayout) findViewById(R.id.ar_view_pane_3);
+
+/**
+        WindowManager wm = (WindowManager) this.getSystemService(Activity.WINDOW_SERVICE);
+        int screenRotation = wm.getDefaultDisplay().getRotation();
+        FrameLayout.LayoutParams frameParams = (FrameLayout.LayoutParams) ViewPane2.getLayoutParams();
+
+        switch (screenRotation) {
+            case Surface.ROTATION_0:
+                frameParams.setMargins(0,0,0,0);
+                break;
+            case Surface.ROTATION_90: // rotation to left
+                frameParams.setMargins(512,0,512,0);
+                break;
+            case Surface.ROTATION_270: // rotation to right
+                frameParams.setMargins(512,0,512,0);
+                break;
+
+        }
+
+**/
 
         DisplayView displayView = new DisplayView(getApplicationContext(), this);
-        ViewPane.addView(displayView);
+        ViewPane3.addView(displayView);
 
         Content = new ViewMain(getApplicationContext());
-        ViewPane.addView(Content);
+        ViewPane2.addView(Content);
 
 
     }

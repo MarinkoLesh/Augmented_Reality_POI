@@ -2,6 +2,21 @@
 <FrameLayout android:layout_height="fill_parent"
     android:layout_width="fill_parent"
     android:id="@+id/ar_view_pane"
-    xmlns:android="http://schemas.android.com/apk/res/android">
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    >
 
+    <FrameLayout
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:id="@+id/ar_view_pane_3"
+       >
+
+    </FrameLayout>
+
+    <FrameLayout
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:id="@+id/ar_view_pane_2"
+        >
+    </FrameLayout>
 </FrameLayout>

@@ -34,7 +34,8 @@ public class DisplayView extends SurfaceView implements
         // This value is supposedly deprecated and set "automatically" when
         // needed.
         // Without this, the application crashes.
-        mHolder.setType(SurfaceHolder.SURFACE_TYPE_PUSH_BUFFERS);
+       // mHolder.setType(SurfaceHolder.SURFACE_TYPE_PUSH_BUFFERS);
+
 
         // callbacks implemented by ArDisplayView
         mHolder.addCallback(this);
@@ -49,6 +50,7 @@ public class DisplayView extends SurfaceView implements
         // Set Display orientation
         Camera.CameraInfo info = new Camera.CameraInfo();
         Camera.getCameraInfo(Camera.CameraInfo.CAMERA_FACING_BACK, info);
+
 
         int rotation = mActivity.getWindowManager().getDefaultDisplay()
                 .getRotation();
@@ -81,9 +83,10 @@ public class DisplayView extends SurfaceView implements
                                int height) {
         Log.d(DEBUG_TAG, "surfaceChanged");
 
-        Camera.Parameters params = mCamera.getParameters();
+        // Camera.Parameters params = mCamera.getParameters();
 
         // Find an appropriate preview size that fits the surface
+        /**
         List<Camera.Size> prevSizes = params.getSupportedPreviewSizes();
         for (Camera.Size s : prevSizes) {
             if ((s.height <= height) && (s.width <= width)) {
@@ -92,10 +95,11 @@ public class DisplayView extends SurfaceView implements
             }
 
         }
+         **/
         // Consider adjusting frame rate to appropriate rate for AR
 
         // Confirm the parameters
-        mCamera.setParameters(params);
+        // mCamera.setParameters(params);
 
         // Begin previewing
         mCamera.startPreview();

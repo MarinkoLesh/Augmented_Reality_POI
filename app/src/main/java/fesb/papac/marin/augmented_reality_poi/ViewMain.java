@@ -26,9 +26,12 @@ import android.util.Log;
 import android.view.Gravity;
 import android.view.LayoutInflater;
 import android.view.MotionEvent;
+import android.view.Surface;
 import android.view.View;
 import android.view.ViewGroup;
+import android.view.WindowManager;
 import android.widget.Button;
+import android.widget.FrameLayout;
 import android.widget.PopupWindow;
 import android.widget.TextView;
 import android.widget.Toast;
@@ -124,18 +127,12 @@ public class ViewMain extends View implements SensorEventListener,
         Gravity = sensors.getDefaultSensor(Sensor.TYPE_GRAVITY);
         LinearAcc = sensors.getDefaultSensor(Sensor.TYPE_LINEAR_ACCELERATION);
 
-        /**
-         * Here i call ScreenRotation class and check the screen rotation. If the screen is rotated then the
-         * sensor axis need to be changed as well. For better explanation check ScreenRotation class.
-         */
-        ScreenRotation screenRotation = new ScreenRotation(context);
-        screenRot = screenRotation.getScreenRotation();
-        axisX = screenRotation.getAxisX();
-        axisY = screenRotation.getAxisY();
-
+        axisX = SensorManager.AXIS_X;
+        axisY = SensorManager.AXIS_Z;
 
         startSensors();
         startGPS();
+
 
         /**
          *  This is used to get field of view of the camera
@@ -207,7 +204,7 @@ public class ViewMain extends View implements SensorEventListener,
         // criteria.setAccuracy(Criteria.ACCURACY_FINE);
         // while we want fine accuracy, it's unlikely to work indoors where we
         // do our testing. :)
-        criteria.setAccuracy(Criteria.NO_REQUIREMENT);
+        criteria.setAccuracy(Criteria.ACCURACY_FINE);
         criteria.setPowerRequirement(Criteria.NO_REQUIREMENT);
 
         String best = locationManager.getBestProvider(criteria, true);
@@ -222,9 +219,19 @@ public class ViewMain extends View implements SensorEventListener,
          * the location has changed by at least minDistance meters, AND at least minTime milliseconds have passed.
          */
 
-         locationManager.requestLocationUpdates(best, 50, 0, this);
+        locationManager.requestLocationUpdates(best, 50, 0, this);
+
+        if (locationManager !=null){
+            lastLocation = locationManager.getLastKnownLocation(LocationManager.GPS_PROVIDER);
+
+        }
+        if (lastLocation != null){
+            endLat = lastLocation.getLatitude();
+            endLong = lastLocation.getLongitude();
+        }
 
 
+/**
         if (locationManager !=null )
         {
             lastLocation = locationManager.getLastKnownLocation(LocationManager.NETWORK_PROVIDER);
@@ -238,13 +245,14 @@ public class ViewMain extends View implements SensorEventListener,
             endLat = lastLocation.getLatitude();
             endLong = lastLocation.getLongitude();
         }
+ **/
 
         /**
          *  The main problem the code in "green" is that if you have on gps and network, network will always get your location first
          *  but i can't make the phone use gps after some time, to get better accuracy. I can do that only if i have a button
          *  which will change from network to gps
          */
-        /**
+/**
         Location gps_loc = null, net_loc = null;
 
         if (gps_enabled){
@@ -268,15 +276,15 @@ public class ViewMain extends View implements SensorEventListener,
             if (gps_loc != null){
                 lastLocation = gps_loc;
                 locationManager.requestLocationUpdates(LocationManager.GPS_PROVIDER, 50, 0, this);
+            }
             else if (net_loc != null){
                 lastLocation = net_loc;
                 locationManager.requestLocationUpdates(LocationManager.NETWORK_PROVIDER, 50, 0, this);
-         }
             }
 
         }
-        **/
 
+**/
     }
 
     @Override
@@ -288,9 +296,31 @@ public class ViewMain extends View implements SensorEventListener,
         int [] distance = new int [ pointOfInterests.length];
         int [] counter = new int[ pointOfInterests.length];
 
-
         canvasHeight = canvas.getHeight();
         canvasWidth = canvas.getWidth();
+
+        WindowManager wm = (WindowManager) context.getSystemService(Activity.WINDOW_SERVICE);
+        int screenRotation = wm.getDefaultDisplay().getRotation();
+        int konstx =0;
+        int konsty = 0;
+        switch (screenRotation) {
+            case Surface.ROTATION_0:
+                konstx = (int) (canvasWidth / horizontalFOV);
+                konsty = (int) (canvasHeight/ verticalFOV);
+                break;
+            case Surface.ROTATION_90: // rotation to left
+                konsty = (int) (canvasWidth / verticalFOV);
+                konstx = (int) (canvasHeight/ horizontalFOV);
+                break;
+            case Surface.ROTATION_270: // rotation to right
+                konsty = (int) (canvasWidth / verticalFOV);
+                konstx = (int) (canvasHeight/ horizontalFOV);
+                break;
+
+        }
+
+
+
 
         /**
          * This loop is used to calculate the distance between the phone and every POI( point of interest)
@@ -507,7 +537,8 @@ public class ViewMain extends View implements SensorEventListener,
                  *  to the ground no mather the phone angle about y/z axis
                  */
 
-                   // canvas.rotate((float) (0.0f - (Math.toDegrees(orientation[2]) /2)));
+                // canvas.rotate((float) (0.0f - (Math.toDegrees(orientation[2]) /2)));
+
 
                 /**
                  * Translate, but normalize for the FOV( field of view) of the camera -- basically, pixels per degree, times degrees == pixels
@@ -524,8 +555,9 @@ public class ViewMain extends View implements SensorEventListener,
                  * Za y vrijednost koristim Math.toDegrees(orientation[1]) / 3. Tu vrijednost dijelim s 3 jer zelim smanjiti utjecaj mobitela
                  * u pomaku gore-dole.
                  */
-                float dx = (float) ((canvas.getWidth() / horizontalFOV) * (Math.toDegrees(orientation[0]) - listOfBearingTo.get(counter[i])));
-                float dy = (float) ((canvas.getHeight() / verticalFOV ) * Math.toDegrees(orientation[1]) /3);
+
+               float dx = (float) ((konstx) * ( Math.toDegrees(orientation[0]) - listOfBearingTo.get(counter[i])));
+               float dy = (float) ((konsty ) * Math.toDegrees(orientation[1]) /3);
                 //float dy =  ((canvas.getHeight() / verticalFOV )   * POIHigh   ); /** this way the POI won't move about y axis, only about x axis**/
 
 
@@ -541,19 +573,19 @@ public class ViewMain extends View implements SensorEventListener,
 
 
                 // draw rectangle  ( left , top, right, bottom)
-                canvas.drawRect((canvas.getWidth() / 2) - ( textOffset * 20 ), (canvas.getHeight()/2 ) - 50 - POIHight, (canvas.getWidth() / 2) + ( textOffset * 20 ), (canvas.getHeight()/2 ) + 80 - POIHight, roundRec);
+                canvas.drawRect((float) ((canvasWidth / 2) - ( textOffset * 20 )), (float) ((canvasHeight/ 2 ) - 50 - POIHight), (float) ((canvasWidth / 2) + ( textOffset * 20 )), (float) ((canvasHeight/ 2 ) + 80 - POIHight), roundRec);
 
                 // draw border rectangle
-                canvas.drawRect((canvas.getWidth() / 2) - ( textOffset * 20 ), (canvas.getHeight()/2 ) - 50 - POIHight, (canvas.getWidth() / 2) + ( textOffset * 20 ), (canvas.getHeight()/2 ) + 80 - POIHight, borderRec);
+                canvas.drawRect((float) ((canvasWidth / 2) - ( textOffset * 20 )), (float) ((canvasHeight/ 2 ) - 50 - POIHight), (float) ((canvasWidth / 2) + ( textOffset * 20 )), (float) ((canvasHeight/ 2 ) + 80 - POIHight), borderRec);
 
 
                 // draw text
-                canvas.drawText(mytext, (canvas.getWidth() / 2) , (canvas.getHeight()/2 - POIHight) , textPaint);
-                canvas.drawText(mytext2 +" meters ", (canvas.getWidth() / 2) , (canvas.getHeight()/ 2 ) + 40f - POIHight, textPaint);
+                canvas.drawText(mytext, (float) (canvasWidth / 2), (float) (canvasHeight/2 - POIHight), textPaint);
+                canvas.drawText(mytext2 +" meters ", (float) (canvasWidth / 2), (float) ((canvasHeight/ 2 ) + 40f - POIHight), textPaint);
 
 
                 // draw my drawable picture
-                canvas.drawBitmap ( bmp, (canvas.getWidth()/2) - 36 * 5, (canvas.getHeight()/2)- 95 * 4 - POIHight, null);
+                canvas.drawBitmap ( bmp, ((float) (canvasWidth/2)) - 36 * 5, ((float )canvasHeight/2)- 95 * 4 - POIHight, null);
 
                 /**
                  * canvas.save() and canvas.restore() is almost the same as the canvas.translate(). It is used so i don't
@@ -736,7 +768,7 @@ public class ViewMain extends View implements SensorEventListener,
 
 
     // static final float ALPHA = 0.05f; // if ALPHA = 1 OR 0, no filter applies.
-    static final float ALPHA = 0.3f;
+    static final float ALPHA = 0.5f;
 
     protected float[] lowPass(float[] input, float[] output) {
         if (output == null) return input;
@@ -745,5 +777,6 @@ public class ViewMain extends View implements SensorEventListener,
         }
         return output;
     }
+
 
 }
