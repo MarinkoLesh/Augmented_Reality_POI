@@ -268,6 +268,10 @@ public class ViewMain extends View implements SensorEventListener,
             if (gps_loc != null){
                 lastLocation = gps_loc;
                 locationManager.requestLocationUpdates(LocationManager.GPS_PROVIDER, 50, 0, this);
+            else if (net_loc != null){
+                lastLocation = net_loc;
+                locationManager.requestLocationUpdates(LocationManager.NETWORK_PROVIDER, 50, 0, this);
+         }
             }
 
         }
