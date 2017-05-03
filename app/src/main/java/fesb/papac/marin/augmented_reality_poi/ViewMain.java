@@ -8,6 +8,7 @@ import android.content.Intent;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.graphics.Canvas;
+import android.graphics.Matrix;
 import android.graphics.Paint;
 import android.hardware.Camera;
 import android.hardware.Sensor;
@@ -30,8 +31,11 @@ import android.view.Surface;
 import android.view.View;
 import android.view.ViewGroup;
 import android.view.WindowManager;
+import android.view.animation.Animation;
+import android.view.animation.RotateAnimation;
 import android.widget.Button;
 import android.widget.FrameLayout;
+import android.widget.ImageView;
 import android.widget.PopupWindow;
 import android.widget.TextView;
 import android.widget.Toast;
@@ -51,6 +55,8 @@ public class ViewMain extends View implements SensorEventListener,
         LocationListener {
 
     double canvasWidth,canvasHeight;
+    float compasBearing;
+
 
     public static PointOfInterest[] pointOfInterests;
 
@@ -99,14 +105,21 @@ public class ViewMain extends View implements SensorEventListener,
     float rotation[] = new float[9];
     float identity[] = new float[9];
 
+    float compassRotation[] = new float[9];
+    float compasCameraRotation[] = new float[9];
+
     float cameraRotation[] = new float[9];
 
     List<Float> listOfBearingTo = new ArrayList<>();
 
     float orientation[] = new float[3];
     float orientationAplha [] = new float[3];
+    float compasOrientation[] = new float[3];
 
     Bitmap bmp = BitmapFactory.decodeResource(getResources(), R.drawable.poismaller);
+    int bmpWidth = bmp.getWidth();
+    int bmpHeight = bmp.getHeight();
+
 
     PopupWindow popupWindow;
 
@@ -129,6 +142,7 @@ public class ViewMain extends View implements SensorEventListener,
 
         axisX = SensorManager.AXIS_X;
         axisY = SensorManager.AXIS_Z;
+
 
         startSensors();
         startGPS();
@@ -595,14 +609,22 @@ public class ViewMain extends View implements SensorEventListener,
 
                 canvas.restore();
 
-                /**
+                SensorManager.getRotationMatrixFromVector(compassRotation, lastRotationVector);
+                SensorManager.remapCoordinateSystem(compassRotation, SensorManager.AXIS_X, SensorManager.AXIS_Y, compasCameraRotation);
+                SensorManager.getOrientation(compasCameraRotation, compasOrientation);
+
+                compasBearing = (float) Math.toDegrees(compasOrientation[0]);
+                if(compasBearing<0){
+                    compasBearing += 360;
+                }
+                int rotateCompas = (int) (180-compasBearing);
                 canvas.save();
-                canvas.translate(0.0f,0.0f);
-                canvas.rotate((float) (0.0f - (Math.toDegrees(orientation[2]))));
+
+
+                canvas.rotate(rotateCompas,(float)canvasWidth/2 - bmpWidth,(float) canvasHeight/2 - bmpHeight);
+                canvas.drawBitmap(bmp, (float)canvasWidth/2 - bmpWidth,(float) canvasHeight/2 - bmpHeight, null);
 
                 canvas.restore();
-                 **/
-
 
             }
         }

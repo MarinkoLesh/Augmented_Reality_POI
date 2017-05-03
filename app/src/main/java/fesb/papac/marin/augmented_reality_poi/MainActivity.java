@@ -23,6 +23,7 @@ import java.io.InputStream;
 public class MainActivity extends AppCompatActivity {
 
     private ViewMain Content;
+    private Radar RadarContent;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -42,6 +43,7 @@ public class MainActivity extends AppCompatActivity {
 
         Content = new ViewMain(getApplicationContext());
         ViewPane2.addView(Content);
+
 
 
     }
