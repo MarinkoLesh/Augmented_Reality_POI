@@ -309,12 +309,12 @@ public class ViewMain extends View implements SensorEventListener,
                 konsty = (int) (canvasHeight/ verticalFOV);
                 break;
             case Surface.ROTATION_90: // rotation to left
-                konsty = (int) (canvasWidth / verticalFOV);
                 konstx = (int) (canvasHeight/ horizontalFOV);
+                konsty = (int) (canvasWidth / verticalFOV);
                 break;
             case Surface.ROTATION_270: // rotation to right
-                konsty = (int) (canvasWidth / verticalFOV);
                 konstx = (int) (canvasHeight/ horizontalFOV);
+                konsty = (int) (canvasWidth / verticalFOV);
                 break;
 
         }

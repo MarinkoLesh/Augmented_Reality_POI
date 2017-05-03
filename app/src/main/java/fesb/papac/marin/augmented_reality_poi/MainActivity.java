@@ -37,28 +37,8 @@ public class MainActivity extends AppCompatActivity {
         FrameLayout ViewPane2 = (FrameLayout) findViewById(R.id.ar_view_pane_2);
         FrameLayout ViewPane3 = (FrameLayout) findViewById(R.id.ar_view_pane_3);
 
-/**
-        WindowManager wm = (WindowManager) this.getSystemService(Activity.WINDOW_SERVICE);
-        int screenRotation = wm.getDefaultDisplay().getRotation();
-        FrameLayout.LayoutParams frameParams = (FrameLayout.LayoutParams) ViewPane2.getLayoutParams();
-
-        switch (screenRotation) {
-            case Surface.ROTATION_0:
-                frameParams.setMargins(0,0,0,0);
-                break;
-            case Surface.ROTATION_90: // rotation to left
-                frameParams.setMargins(512,0,512,0);
-                break;
-            case Surface.ROTATION_270: // rotation to right
-                frameParams.setMargins(512,0,512,0);
-                break;
-
-        }
-
-**/
-
-        DisplayView displayView = new DisplayView(getApplicationContext(), this);
-        ViewPane3.addView(displayView);
+        DisplayView displayView1 = new DisplayView(this);
+        ViewPane3.addView(displayView1);
 
         Content = new ViewMain(getApplicationContext());
         ViewPane2.addView(Content);
