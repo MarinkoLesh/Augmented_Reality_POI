@@ -8,6 +8,7 @@ import android.content.Intent;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.graphics.Canvas;
+import android.graphics.Color;
 import android.graphics.Matrix;
 import android.graphics.Paint;
 import android.hardware.Camera;
@@ -55,7 +56,7 @@ public class ViewMain extends View implements SensorEventListener,
         LocationListener {
 
     double canvasWidth,canvasHeight;
-    float compasBearing;
+    float compasBearing, POIBearing;
 
 
     public static PointOfInterest[] pointOfInterests;
@@ -119,6 +120,20 @@ public class ViewMain extends View implements SensorEventListener,
     Bitmap bmp = BitmapFactory.decodeResource(getResources(), R.drawable.poismaller);
     int bmpWidth = bmp.getWidth();
     int bmpHeight = bmp.getHeight();
+
+    Bitmap bmpCompass = BitmapFactory.decodeResource(getResources(), R.drawable.kompas);
+    float bmpCompassWidth = bmpCompass.getWidth();
+    float bmpCompassHeight = bmpCompass.getHeight();
+
+    Bitmap bmpPoint = BitmapFactory.decodeResource(getResources(),R.drawable.redpoint);
+    float bmpPoinwWidth = bmpPoint.getWidth();
+    float bmpPointHeight = bmpPoint.getHeight();
+
+
+    /**
+     *  Here i use 500 because i will show only POI's that are 500m from my location
+     */
+
 
 
     PopupWindow popupWindow;
@@ -309,6 +324,11 @@ public class ViewMain extends View implements SensorEventListener,
         float[] dist = new float[1];
         int [] distance = new int [ pointOfInterests.length];
         int [] counter = new int[ pointOfInterests.length];
+
+        float[] distForCompass = new float[1];
+        int distanceForCompass;
+
+        float POIWidth;
 
         canvasHeight = canvas.getHeight();
         canvasWidth = canvas.getWidth();
@@ -610,20 +630,69 @@ public class ViewMain extends View implements SensorEventListener,
                 canvas.restore();
 
                 SensorManager.getRotationMatrixFromVector(compassRotation, lastRotationVector);
-                SensorManager.remapCoordinateSystem(compassRotation, SensorManager.AXIS_X, SensorManager.AXIS_Y, compasCameraRotation);
+                SensorManager.remapCoordinateSystem(compassRotation, SensorManager.AXIS_X, SensorManager.AXIS_Z, compasCameraRotation);
                 SensorManager.getOrientation(compasCameraRotation, compasOrientation);
 
                 compasBearing = (float) Math.toDegrees(compasOrientation[0]);
                 if(compasBearing<0){
                     compasBearing += 360;
                 }
-                int rotateCompas = (int) (180-compasBearing);
+                int rotateCompas = (int) (360-compasBearing);
+
                 canvas.save();
 
+                Paint p = new Paint();
+                p.setAlpha(70);
 
-                canvas.rotate(rotateCompas,(float)canvasWidth/2 - bmpWidth,(float) canvasHeight/2 - bmpHeight);
-                canvas.drawBitmap(bmp, (float)canvasWidth/2 - bmpWidth,(float) canvasHeight/2 - bmpHeight, null);
+                Matrix transform = new Matrix();
+                transform.setRotate(rotateCompas,bmpCompassWidth/2, bmpCompassHeight/2);
+                transform.postTranslate((float) canvasWidth-bmpCompassWidth, 0);
+                canvas.drawBitmap(bmpCompass,transform,p);
 
+                canvas.restore();
+                canvas.save();
+
+                for (int j = 0; j < pointOfInterests.length; j++){
+
+                    Location.distanceBetween( pointOfInterests[j].getLatitude(),
+                                pointOfInterests[j].getLongitude(), endLat, endLong, distForCompass );
+                    distanceForCompass = (int) distForCompass[0];
+
+
+
+                    Paint point = new Paint();
+                    point.setColor(Color.BLACK);
+
+                    //POIBearing = (float) Math.toDegrees(compasOrientation[0] - listOfBearingTo.get(j));
+                    POIBearing = (float) Math.toDegrees( compasOrientation[0])-listOfBearingTo.get(j);
+                    //POIBearing = (float) Math.toDegrees(compasOrientation[0] );
+                    if (POIBearing < 0){
+                        POIBearing += 360;
+                    }
+                    //POIBearing = (float) (POIBearing - Math.toDegrees(listOfBearingTo.get(j)));
+
+
+                    int rotatePOI = (int) (360- POIBearing);
+                    POIWidth =  (((bmpCompassWidth)/800) * distanceForCompass);
+
+                    canvas.save();
+
+
+                    Matrix transformPOI = new Matrix();
+                    transformPOI.setTranslate((float) (canvasWidth-(bmpCompassWidth/2)-(bmpPoinwWidth/2)),  ((bmpCompassHeight/2)-POIWidth));
+                    transformPOI.postRotate(rotatePOI,(float) (canvasWidth-(bmpCompassWidth/2)),  ((bmpCompassHeight/2)));
+                    //transformPOI.setRotate(rotatePOI,bmpCompassWidth/2, bmpCompassHeight/2);
+                    //transformPOI.postTranslate((float) (canvasWidth-(bmpCompassWidth/2)),(bmpCompassHeight/2)- POIWidth);
+                    canvas.drawBitmap(bmpPoint,transformPOI,null);
+
+
+                    canvas.restore();
+                }
+
+                /**
+                canvas.rotate(rotateCompas,(float)canvasWidth - bmpCompassWidth,(float)  bmpCompassHeight);
+                canvas.drawBitmap(bmpCompass, (float)canvasWidth - bmpCompassWidth,(float) bmpCompassHeight, null);
+                **/
                 canvas.restore();
 
             }
