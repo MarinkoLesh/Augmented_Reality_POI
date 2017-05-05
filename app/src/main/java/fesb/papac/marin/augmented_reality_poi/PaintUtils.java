@@ -19,6 +19,8 @@ public class PaintUtils extends Paint {
     private Paint targetPaint;
     private Paint roundRec;
     private Paint borderRec;
+    private Paint compassPaint;
+    private Paint linePaint;
 
     public PaintUtils(ViewMain context) {
         super();
@@ -52,6 +54,14 @@ public class PaintUtils extends Paint {
         borderRec.setStrokeWidth(10);
         borderRec.setColor(myColor);
         borderRec.setStyle(Style.STROKE);
+
+        // paint for compass, this is used to only set transparency
+        compassPaint = new Paint(Paint.ANTI_ALIAS_FLAG);
+        compassPaint.setAlpha(60);
+
+        // paint for line on compass/radar
+        linePaint = new Paint(Paint.ANTI_ALIAS_FLAG);
+        linePaint.setColor(Color.BLACK);
     }
 
     public TextPaint getContentPaint(){ return contentPaint;}
@@ -59,5 +69,7 @@ public class PaintUtils extends Paint {
     public Paint getTargetPaint() { return targetPaint;}
     public Paint getRoundRec() { return roundRec;}
     public Paint getBorderRec() { return borderRec;}
+    public Paint getCompassPaint() { return compassPaint;}
+    public Paint getLinePaint() { return linePaint;}
 
 }

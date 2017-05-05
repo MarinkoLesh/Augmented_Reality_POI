@@ -58,6 +58,11 @@ public class ViewMain extends View implements SensorEventListener,
     double canvasWidth,canvasHeight;
     float compasBearing, POIBearing;
 
+    /**
+     * Here you set the distance of radar. No point that is further then radarRange won't be shown
+     */
+    float radarRange = 600;
+
 
     public static PointOfInterest[] pointOfInterests;
 
@@ -97,7 +102,7 @@ public class ViewMain extends View implements SensorEventListener,
     private Sensor accelSensor, compassSensor, gyroSensor, RotateVectorSensor, GameRotationVector, Gravity, LinearAcc;
 
     private TextPaint contentPaint, textPaint;
-    private Paint targetPaint, roundRec, borderRec;
+    private Paint targetPaint, roundRec, borderRec, compassPaint, linePaint;
 
     private int axisX,axisY, screenRot;
 
@@ -129,12 +134,7 @@ public class ViewMain extends View implements SensorEventListener,
     float bmpPoinwWidth = bmpPoint.getWidth();
     float bmpPointHeight = bmpPoint.getHeight();
 
-
-    /**
-     *  Here i use 500 because i will show only POI's that are 500m from my location
-     */
-
-
+    float mathTan;
 
     PopupWindow popupWindow;
 
@@ -180,6 +180,8 @@ public class ViewMain extends View implements SensorEventListener,
         textPaint = paintUtilities.getTextPaint();
         roundRec = paintUtilities.getRoundRec();
         borderRec = paintUtilities.getBorderRec();
+        compassPaint = paintUtilities.getCompassPaint();
+        linePaint = paintUtilities.getLinePaint();
 
         String json= null;
         try {
@@ -337,18 +339,28 @@ public class ViewMain extends View implements SensorEventListener,
         int screenRotation = wm.getDefaultDisplay().getRotation();
         int konstx =0;
         int konsty = 0;
+
         switch (screenRotation) {
             case Surface.ROTATION_0:
                 konstx = (int) (canvasWidth / horizontalFOV);
                 konsty = (int) (canvasHeight/ verticalFOV);
+                mathTan = (float) ((float) Math.tan(Math.toRadians(horizontalFOV/2))+ 0.1);
+                axisX = SensorManager.AXIS_X;
+                axisY = SensorManager.AXIS_Z;
                 break;
             case Surface.ROTATION_90: // rotation to left
                 konstx = (int) (canvasHeight/ horizontalFOV);
                 konsty = (int) (canvasWidth / verticalFOV);
+                mathTan = (float) ((float) Math.tan(Math.toRadians(horizontalFOV/2))+ 0.7);
+                axisX = SensorManager.AXIS_Z;
+                axisY = SensorManager.AXIS_MINUS_X;
                 break;
             case Surface.ROTATION_270: // rotation to right
                 konstx = (int) (canvasHeight/ horizontalFOV);
                 konsty = (int) (canvasWidth / verticalFOV);
+                mathTan = (float) ((float) Math.tan(Math.toRadians(horizontalFOV/2))+ 0.7);
+                axisX = SensorManager.AXIS_MINUS_Z;
+                axisY = SensorManager.AXIS_X;
                 break;
 
         }
@@ -568,31 +580,24 @@ public class ViewMain extends View implements SensorEventListener,
 
                 /**
                  *  canvas.rotate() is used because if I apply roll to the phone i want my picture to always stay parallel
-                 *  to the ground no mather the phone angle about y/z axis
+                 *  to the ground no mather the phone angle about y/z axis. I have to set the point around which my POI will rotate.
                  */
 
-                // canvas.rotate((float) (0.0f - (Math.toDegrees(orientation[2]) /2)));
+                canvas.rotate((float) (0.0f-Math.toDegrees(orientation[2])), (float)canvasWidth/2,(float)canvasHeight/2 + bmpHeight);
 
 
                 /**
-                 * Translate, but normalize for the FOV( field of view) of the camera -- basically, pixels per degree, times degrees == pixels
+                 *  This is the heart of this app. Here i set the coordinates of the point on the screen.
+                 *  konstx = canvasWidth/ horizontalFOV, canvasWidth is the width of the screen and horizontalFOv is the field
+                 *  of view of the camera in degrees.
                  *
-                 * Ne znam kako pametno napisati na engleskom, ukratko:
+                 *  orientation[0] is how much the phone is oriented from true North. If i lower that with the bearing of the point
+                 *  i need i can get a value. That value shows how is my phone oriented from the point in degree.
                  *
-                 * (canvas.getWidth() / horizontalFOV) znaci da se sirina ekrana podjeli sa vrijednosti koja govori koliki je
-                 * horizontali kut gledanja kamere, tu se dobije konstanta, nazovimo je konstanta ekrana.
-                 *
-                 * Math.toDegrees(orientation[0]) - listOfBearingTo.get(counter[i]) daje vrijednost koja je kut izmedu orijentacije mobitela
-                 * i kuta na kojoj se nalazi tocka. Ako su te dvije vrijednosti jednake to znaci da se tocka nalazi na sredini ekrana.
-                 * Ako je njihova vrijednost veca od horizontalnog kuta gledanja kamere to znaci da se tocka mora nacrtati van ekrana.
-                 *
-                 * Za y vrijednost koristim Math.toDegrees(orientation[1]) / 3. Tu vrijednost dijelim s 3 jer zelim smanjiti utjecaj mobitela
-                 * u pomaku gore-dole.
                  */
 
                float dx = (float) ((konstx) * ( Math.toDegrees(orientation[0]) - listOfBearingTo.get(counter[i])));
                float dy = (float) ((konsty ) * Math.toDegrees(orientation[1]) /3);
-                //float dy =  ((canvas.getHeight() / verticalFOV )   * POIHigh   ); /** this way the POI won't move about y axis, only about x axis**/
 
 
                 /**
@@ -619,7 +624,8 @@ public class ViewMain extends View implements SensorEventListener,
 
 
                 // draw my drawable picture
-                canvas.drawBitmap ( bmp, ((float) (canvasWidth/2)) - 36 * 5, ((float )canvasHeight/2)- 95 * 4 - POIHight, null);
+                //canvas.drawBitmap ( bmp, ((float) (canvasWidth/2)) - 36 * 5, ((float )canvasHeight/2)- 95 * 4 - POIHight, null);
+                canvas.drawBitmap(bmp, (float) (canvasWidth/2)-(bmpWidth/2),(float) (canvasHeight/2) - bmpHeight - POIHight - (bmpHeight/3),null);
 
                 /**
                  * canvas.save() and canvas.restore() is almost the same as the canvas.translate(). It is used so i don't
@@ -629,11 +635,13 @@ public class ViewMain extends View implements SensorEventListener,
 
                 canvas.restore();
 
-                SensorManager.getRotationMatrixFromVector(compassRotation, lastRotationVector);
-                SensorManager.remapCoordinateSystem(compassRotation, SensorManager.AXIS_X, SensorManager.AXIS_Z, compasCameraRotation);
-                SensorManager.getOrientation(compasCameraRotation, compasOrientation);
+                /**
+                 * Here i draw my compass/radar, and set it's rotation around it's center
+                 */
 
-                compasBearing = (float) Math.toDegrees(compasOrientation[0]);
+                float radarLineX = (bmpCompassHeight/2) * mathTan;
+
+                compasBearing = (float) Math.toDegrees(orientation[0]);
                 if(compasBearing<0){
                     compasBearing += 360;
                 }
@@ -641,16 +649,21 @@ public class ViewMain extends View implements SensorEventListener,
 
                 canvas.save();
 
-                Paint p = new Paint();
-                p.setAlpha(70);
-
                 Matrix transform = new Matrix();
                 transform.setRotate(rotateCompas,bmpCompassWidth/2, bmpCompassHeight/2);
                 transform.postTranslate((float) canvasWidth-bmpCompassWidth, 0);
-                canvas.drawBitmap(bmpCompass,transform,p);
+                canvas.drawBitmap(bmpCompass,transform, compassPaint);
+
+                canvas.drawLine((float)canvasWidth-(bmpCompassWidth/2), bmpCompassWidth/2,(float)canvasWidth - (bmpCompassWidth/2) + radarLineX,0, linePaint);
+                canvas.drawLine((float)canvasWidth-(bmpCompassWidth/2), bmpCompassWidth/2,(float)canvasWidth - (bmpCompassWidth/2) - radarLineX,0, linePaint);
 
                 canvas.restore();
                 canvas.save();
+
+                /**
+                 * Here i draw my points for radar, if the distance of the point is bigger than the radarRange, the point
+                 * won't be drawn
+                 */
 
                 for (int j = 0; j < pointOfInterests.length; j++){
 
@@ -659,42 +672,27 @@ public class ViewMain extends View implements SensorEventListener,
                     distanceForCompass = (int) distForCompass[0];
 
 
+                    if (distanceForCompass < radarRange){
+                        POIBearing = (float) Math.toDegrees( orientation[0])-listOfBearingTo.get(j);
+                        if (POIBearing < 0){
+                            POIBearing += 360;
+                        }
 
-                    Paint point = new Paint();
-                    point.setColor(Color.BLACK);
 
-                    //POIBearing = (float) Math.toDegrees(compasOrientation[0] - listOfBearingTo.get(j));
-                    POIBearing = (float) Math.toDegrees( compasOrientation[0])-listOfBearingTo.get(j);
-                    //POIBearing = (float) Math.toDegrees(compasOrientation[0] );
-                    if (POIBearing < 0){
-                        POIBearing += 360;
+                        int rotatePOI = (int) (360- POIBearing);
+                        POIWidth =  (((bmpCompassWidth/2)/radarRange) * distanceForCompass);
+
+                        canvas.save();
+
+                        Matrix transformPOI = new Matrix();
+                        transformPOI.setTranslate((float) (canvasWidth-(bmpCompassWidth/2)-(bmpPoinwWidth/2)),  ((bmpCompassHeight/2)-POIWidth));
+                        transformPOI.postRotate(rotatePOI,(float) (canvasWidth-(bmpCompassWidth/2)),  ((bmpCompassHeight/2)));
+                        canvas.drawBitmap(bmpPoint,transformPOI,null);
+
+                        canvas.restore();
                     }
-                    //POIBearing = (float) (POIBearing - Math.toDegrees(listOfBearingTo.get(j)));
-
-
-                    int rotatePOI = (int) (360- POIBearing);
-                    POIWidth =  (((bmpCompassWidth)/800) * distanceForCompass);
-
-                    canvas.save();
-
-
-                    Matrix transformPOI = new Matrix();
-                    transformPOI.setTranslate((float) (canvasWidth-(bmpCompassWidth/2)-(bmpPoinwWidth/2)),  ((bmpCompassHeight/2)-POIWidth));
-                    transformPOI.postRotate(rotatePOI,(float) (canvasWidth-(bmpCompassWidth/2)),  ((bmpCompassHeight/2)));
-                    //transformPOI.setRotate(rotatePOI,bmpCompassWidth/2, bmpCompassHeight/2);
-                    //transformPOI.postTranslate((float) (canvasWidth-(bmpCompassWidth/2)),(bmpCompassHeight/2)- POIWidth);
-                    canvas.drawBitmap(bmpPoint,transformPOI,null);
-
-
-                    canvas.restore();
                 }
-
-                /**
-                canvas.rotate(rotateCompas,(float)canvasWidth - bmpCompassWidth,(float)  bmpCompassHeight);
-                canvas.drawBitmap(bmpCompass, (float)canvasWidth - bmpCompassWidth,(float) bmpCompassHeight, null);
-                **/
                 canvas.restore();
-
             }
         }
     }
